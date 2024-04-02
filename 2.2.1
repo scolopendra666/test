@@ -1,0 +1,42 @@
+  1.Указать строки, в которых присутствуют уязвимости.
+В 10 строке возможна XSS уязвимость. В 14 строке включен режим DEBUG. 
+
+  2.К каким последствиям может привести эксплуатация данных уязвимостей злоумышленником?
+
+В случае XSS, злоумышленник может  заполучить данные(cookie и т.д.) другого пользователя.
+В случае включенного режима DEBUG, злоумышленник имеет возможность заполучить исходный код.
+
+  3.Описать способы исправления уязвимостей.
+Для устранения XSS уязвимости  важно проверять, что ввел пользователь. В нашем случае нужно проверить,  что ввод соответствует нужному типу данных и имеет ожидаемый набор символов.
+Так же можно определить кодировку UTF-8 для правильной обработки символов. 
+Стоит добавить, что нету  проверки обязательных параметров. name не проверяется на наличие, что может привести к ошибке контроля доступа.
+Для устранения включенного режима DEBUG нужно поменять значение на False.
+
+ИСПРАВЛЕННЫЙ КОД:
+# -*- coding: utf-8 -*-
+from flask import Flask, request, escape
+from jinja2 import Template
+
+app = Flask(__name__)
+
+@app.route("/page")
+def page():
+    name = request.values.get('name')
+    age = request.values.get('age', 'unknown')
+
+    # Проверяем, что возраст является числом
+    if age != 'unknown':
+        try:
+            age = int(age)
+        except ValueError:
+            return "Error: 'age' parameter must be a number"
+
+    if name is None:
+        return "Error: 'name' parameter is missing"
+
+    output = Template('Hello {{ name|e }}! Your age is {{ age }}.').render(name=escape(name), age=escape(age))
+    return output
+
+if __name__ == "__main__":
+    app.run(debug=False)
+
