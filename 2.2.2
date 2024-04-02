@@ -1,0 +1,31 @@
+  1. Указать строки, в которых присутствуют уязвимости.
+В 9 строке имеется уязвимость RCE. В 13 строке включен режим DEBUG.
+  
+  2.К каким последствиям может привести эксплуатация данных уязвимостей злоумышленником?
+При RCE уязвимости злоумышленник сможет выполнить произвольные команды на сервере.  
+В случае включенного режима DEBUG, злоумышленник имеет возможность заполучить исходный код.
+
+  3.Описать способы исправления уязвимостей.
+Чтобы защититься  от RCE уязвимости нужно добавить фильтрацию входных данных.
+Выключить режим DEBUG.
+
+
+ИСПРАВЛЕННЫЙ КОД:
+# -*- coding: utf-8 -*-
+from flask import Flask, request
+import subprocess
+import re
+
+app = Flask(__name__)
+
+@app.route("/dns")
+def dns_lookup():
+    hostname = request.values.get('hostname')
+    if not re.match(r'^[a-zA-Z0-9.-]+$', hostname):
+        return "Invalid hostname"
+    cmd = 'nslookup ' + hostname
+    output = subprocess.check_output(cmd, shell=True, text=True)
+    return output
+
+if __name__ == "__main__":
+    app.run(debug=True)
